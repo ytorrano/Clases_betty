@@ -1,0 +1,389 @@
+<title>Reconstruye la Línea</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+  :root{
+    --bg: #EDE6D6;
+    --surface: #E2D9C4;
+    --surface-2: #D8CCB2;
+    --card: #F5F0E4;
+    --ink: #2A241C;
+    --ink-soft: #5C5340;
+    --bronze: #96702F;
+    --bronze-strong: #7A5824;
+    --verdigris: #3F7D6E;
+    --good: #3F7D5A;
+    --good-bg: #DCEBDF;
+    --bad: #A24A3B;
+    --bad-bg: #F3DCD6;
+    --line: #C7B99A;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg: #1C1914; --surface: #262119; --surface-2: #322B20; --card: #2D271E;
+      --ink: #EDE6D6; --ink-soft: #C7BBA0;
+      --bronze: #D3A45C; --bronze-strong: #E6BC7C; --verdigris: #6FB3A0;
+      --good: #6FB38A; --good-bg: #223429; --bad: #D98A78; --bad-bg: #3A241F;
+      --line: #453C2E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg: #1C1914; --surface: #262119; --surface-2: #322B20; --card: #2D271E;
+    --ink: #EDE6D6; --ink-soft: #C7BBA0;
+    --bronze: #D3A45C; --bronze-strong: #E6BC7C; --verdigris: #6FB3A0;
+    --good: #6FB38A; --good-bg: #223429; --bad: #D98A78; --bad-bg: #3A241F;
+    --line: #453C2E;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body{
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Crimson Pro", Georgia, serif;
+    display: flex; justify-content: center;
+    padding: clamp(0.75rem, 3vw, 2rem) 0.75rem;
+  }
+  .app{ width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 1rem; }
+
+  .eyebrow{
+    font-family: "Cinzel", Georgia, serif; font-size: 0.68rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--verdigris); text-align: center;
+  }
+  h1{
+    font-family: "Cinzel", Georgia, serif; font-weight: 600;
+    font-size: clamp(1.3rem, 5vw, 1.7rem); text-align: center; margin: 0;
+    text-wrap: balance;
+  }
+  .progress{
+    display: flex; gap: 0.4rem; justify-content: center;
+  }
+  .progress span{
+    width: 2rem; height: 4px; border-radius: 2px; background: var(--line);
+  }
+  .progress span.active{ background: var(--bronze); }
+  .progress span.done{ background: var(--verdigris); }
+
+  .panel{
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 1.1rem; display: flex; flex-direction: column; gap: 0.9rem;
+  }
+  .instructions{ font-size: 0.95rem; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+  .instructions strong{ color: var(--ink); }
+
+  .pool{ display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .chip{
+    font-family: "Crimson Pro", Georgia, serif; font-size: 0.88rem; line-height: 1.25;
+    background: var(--card); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 6px; padding: 0.5rem 0.7rem; cursor: pointer; text-align: left;
+    min-height: 44px; display: flex; align-items: center;
+  }
+  .chip:active{ background: var(--surface-2); }
+
+  .sequence{ display: flex; flex-direction: column; gap: 0.4rem; min-height: 2rem; }
+  .seq-row{
+    display: flex; align-items: center; gap: 0.6rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 6px;
+    padding: 0.5rem 0.7rem; font-size: 0.88rem; min-height: 44px;
+  }
+  .seq-row .num{
+    font-family: "Cinzel", Georgia, serif; color: var(--bronze-strong);
+    font-size: 0.78rem; min-width: 1.4rem;
+  }
+  .seq-row.correct{ background: var(--good-bg); border-color: var(--good); }
+  .seq-row.wrong{ background: var(--bad-bg); border-color: var(--bad); }
+  .seq-row .date{ margin-left: auto; font-family: "Cinzel", Georgia, serif; font-size: 0.72rem; color: var(--ink-soft); }
+
+  button.primary{
+    font-family: "Cinzel", Georgia, serif; font-size: 0.82rem; letter-spacing: 0.08em;
+    text-transform: uppercase; background: var(--bronze); color: #FBF7ED;
+    border: none; border-radius: 6px; padding: 0.75rem 1rem; cursor: pointer;
+    min-height: 46px;
+  }
+  button.primary:disabled{ opacity: 0.4; cursor: not-allowed; }
+  button.ghost{
+    font-family: "Crimson Pro", Georgia, serif; font-size: 0.85rem;
+    background: transparent; color: var(--verdigris); border: 1px solid var(--verdigris);
+    border-radius: 6px; padding: 0.55rem 0.9rem; cursor: pointer; min-height: 40px;
+  }
+
+  .score-line{
+    font-family: "Cinzel", Georgia, serif; font-size: 0.95rem; text-align: center; color: var(--bronze-strong);
+  }
+
+  .classify-item{
+    border: 1px solid var(--line); border-radius: 6px; padding: 0.7rem; background: var(--card);
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .classify-item .ev{ font-size: 0.88rem; }
+  .btn-row{ display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tag-btn{
+    font-family: "Crimson Pro", Georgia, serif; font-size: 0.78rem;
+    background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 5px; padding: 0.4rem 0.6rem; cursor: pointer; min-height: 38px;
+  }
+  .tag-btn.selected{ background: var(--bronze); color: #FBF7ED; border-color: var(--bronze); }
+  .tag-btn.selected.correct{ background: var(--good); border-color: var(--good); }
+  .tag-btn.selected.wrong{ background: var(--bad); border-color: var(--bad); }
+  .tag-btn.reveal-correct{ outline: 2px solid var(--good); }
+
+  .quiz-q{ font-size: 0.95rem; line-height: 1.5; }
+  .quiz-opt{
+    display: block; width: 100%; text-align: left; font-family: "Crimson Pro", Georgia, serif;
+    font-size: 0.9rem; background: var(--card); border: 1px solid var(--line); color: var(--ink);
+    border-radius: 6px; padding: 0.6rem 0.8rem; margin-top: 0.5rem; cursor: pointer; min-height: 44px;
+  }
+  .quiz-opt.correct{ background: var(--good-bg); border-color: var(--good); }
+  .quiz-opt.wrong{ background: var(--bad-bg); border-color: var(--bad); }
+  .quiz-opt:disabled{ cursor: default; }
+  .feedback{ font-size: 0.85rem; font-style: italic; color: var(--ink-soft); }
+
+  .final{ text-align: center; display: flex; flex-direction: column; gap: 0.8rem; }
+  .final .big{ font-family: "Cinzel", Georgia, serif; font-size: 1.5rem; color: var(--bronze-strong); }
+  .hidden{ display: none !important; }
+  .divider{ height: 1px; background: var(--line); border: none; margin: 0.2rem 0; }
+  .sources{ font-size: 0.76rem; color: var(--ink-soft); line-height: 1.5; text-align: center; }
+  .sources a{ color: var(--verdigris); }
+</style>
+
+<div class="app">
+  <p class="eyebrow">2.1&ndash;2.3 &middot; Derecho castellano</p>
+  <h1>Reconstruye la Línea</h1>
+  <div class="progress" id="progress">
+    <span class="active" data-step="0"></span><span data-step="1"></span><span data-step="2"></span><span data-step="3"></span>
+  </div>
+
+  <!-- STEP 0: intro -->
+  <section class="panel" id="step-intro">
+    <p class="instructions">Trece hechos, del derecho prerromano al matrimonio de 1469, están revueltos. <strong>Tócalos en el orden en que crees que ocurrieron</strong>, del más antiguo al más reciente. No se muestran fechas &mdash; solo tu criterio.</p>
+    <button class="primary" onclick="goStep(1)">Empezar</button>
+  </section>
+
+  <!-- STEP 1: ordering -->
+  <section class="panel hidden" id="step-order">
+    <p class="instructions">Toca los hechos en orden. Si te equivocas, toca uno ya colocado para quitarlo.</p>
+    <div class="sequence" id="sequence"></div>
+    <div class="pool" id="pool"></div>
+    <button class="primary" id="btn-verify-order" disabled onclick="verifyOrder()">Verificar orden</button>
+  </section>
+
+  <!-- STEP 2: classify -->
+  <section class="panel hidden" id="step-classify">
+    <p class="instructions">Ya en su orden real. Para cada uno, marca a qué <strong>capa</strong> pertenece (de las cuatro de 2.1) y si es una <strong>fuente primaria</strong> (documento/código) o un <strong>hito político</strong> (evento). El matrimonio de 1469 queda fuera: no pertenece a ninguna de las cuatro capas de 2.1.</p>
+    <div id="classify-list" style="display:flex; flex-direction:column; gap:0.7rem;"></div>
+    <button class="primary" onclick="verifyClassify()">Revisar clasificación</button>
+  </section>
+
+  <!-- STEP 3: quiz -->
+  <section class="panel hidden" id="step-quiz">
+    <div id="quiz-body"></div>
+  </section>
+
+  <!-- STEP 4: final -->
+  <section class="panel hidden final" id="step-final">
+    <p class="eyebrow">Resultado</p>
+    <p class="big" id="final-score"></p>
+    <p class="instructions" id="final-msg"></p>
+    <button class="ghost" onclick="location.reload()">Jugar de nuevo</button>
+  </section>
+
+  <hr class="divider">
+  <p class="sources">Contenido verificado en las fuentes leídas para la sesión de 2.1-2.3 (Margadant, López Betancourt, Cervantes). Actividad de cierre &mdash; capa propia de la docente.</p>
+</div>
+
+<script>
+const EVENTS = [
+  { id:1, label:"Roma derrota a Cartago", date:"219-218 a.C.", capa:"Romano", tipo:"Hito político" },
+  { id:2, label:"Se extiende la ciudadanía romana a todo el Imperio (Caracalla)", date:"212 d.C.", capa:"Romano", tipo:"Hito político" },
+  { id:3, label:"El cristianismo se vuelve religión oficial del Imperio", date:"380 d.C.", capa:"Romano", tipo:"Hito político" },
+  { id:4, label:"Roma retira sus tropas de Hispania; entran los visigodos", date:"s. V (antes de 419)", capa:"Visigodo", tipo:"Hito político" },
+  { id:5, label:"Se codifica el Código de Eurico", date:"bajo Eurico, antes de 506", capa:"Visigodo", tipo:"Fuente primaria" },
+  { id:6, label:"Breviario de Alarico / Lex Romana Visigothorum", date:"506", capa:"Visigodo", tipo:"Fuente primaria" },
+  { id:7, label:"Ley de Teudis", date:"546", capa:"Visigodo", tipo:"Fuente primaria" },
+  { id:8, label:"Ocupación bizantina del sur de la península (Justiniano)", date:"554-622", capa:"Visigodo", tipo:"Hito político" },
+  { id:9, label:"Codex Revisus de Leovigildo", date:"entre 546 y 654", capa:"Visigodo", tipo:"Fuente primaria" },
+  { id:10, label:"Concilio de Toledo presidido por San Isidoro", date:"619", capa:"Visigodo", tipo:"Hito político" },
+  { id:11, label:"Fuero Juzgo / Liber Iudiciorum", date:"654", capa:"Visigodo", tipo:"Fuente primaria" },
+  { id:12, label:"Invasión musulmana (Tarik)", date:"711", capa:"Árabe", tipo:"Hito político" },
+  { id:13, label:"Matrimonio de Isabel de Castilla y Fernando de Aragón", date:"1469", capa:null, tipo:null }
+];
+const CAPAS = ["Prerromano","Romano","Visigodo","Árabe"];
+const TIPOS = ["Fuente primaria","Hito político"];
+
+let placed = [];
+let pool = [...EVENTS].sort(() => Math.random() - 0.5);
+let orderScore = 0, classifyScore = 0, quizScore = 0;
+const classifyChoices = {};
+
+function goStep(n){
+  ["step-intro","step-order","step-classify","step-quiz","step-final"].forEach((id,i)=>{
+    document.getElementById(id).classList.toggle("hidden", i !== n);
+  });
+  document.querySelectorAll("#progress span").forEach((s,i)=>{
+    s.classList.toggle("active", i === n-1 >= 0 ? i === (n-1) : false);
+  });
+  document.querySelectorAll("#progress span").forEach((s,i)=>{
+    s.classList.remove("active","done");
+    if(i < n-1 || (n===4 && i<=3)) s.classList.add("done");
+    else if(i === n-1) s.classList.add("active");
+  });
+  if(n===1) renderPool();
+  if(n===2) renderClassify();
+  if(n===3) renderQuiz();
+}
+
+function renderPool(){
+  const poolEl = document.getElementById("pool");
+  poolEl.innerHTML = "";
+  pool.forEach(ev=>{
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = ev.label;
+    b.onclick = () => { placed.push(ev); pool = pool.filter(e=>e.id!==ev.id); renderPool(); renderSequence(); };
+    poolEl.appendChild(b);
+  });
+  const verifyBtn = document.getElementById("btn-verify-order");
+  if(verifyBtn) verifyBtn.disabled = pool.length > 0;
+}
+function renderSequence(){
+  const seqEl = document.getElementById("sequence");
+  seqEl.innerHTML = "";
+  placed.forEach((ev,i)=>{
+    const row = document.createElement("div");
+    row.className = "seq-row";
+    row.innerHTML = `<span class="num">${i+1}</span><span>${ev.label}</span>`;
+    row.onclick = () => { placed = placed.filter(e=>e.id!==ev.id); pool.push(ev); renderPool(); renderSequence(); };
+    seqEl.appendChild(row);
+  });
+}
+function verifyOrder(){
+  const correctOrder = [...EVENTS];
+  orderScore = 0;
+  const seqEl = document.getElementById("sequence");
+  seqEl.innerHTML = "";
+  placed.forEach((ev,i)=>{
+    const isCorrect = correctOrder[i].id === ev.id;
+    if(isCorrect) orderScore++;
+    const row = document.createElement("div");
+    row.className = "seq-row " + (isCorrect ? "correct" : "wrong");
+    row.innerHTML = `<span class="num">${i+1}</span><span>${ev.label}</span><span class="date">${ev.date}</span>`;
+    seqEl.appendChild(row);
+  });
+  document.getElementById("btn-verify-order").outerHTML =
+    `<p class="score-line">${orderScore} de 13 en la posición correcta</p><button class="primary" onclick="goStep(2)">Continuar a clasificar</button>`;
+}
+
+function renderClassify(){
+  const list = document.getElementById("classify-list");
+  list.innerHTML = "";
+  EVENTS.filter(e=>e.capa).forEach(ev=>{
+    classifyChoices[ev.id] = { capa:null, tipo:null };
+    const div = document.createElement("div");
+    div.className = "classify-item";
+    div.innerHTML = `<div class="ev">${ev.label}</div>
+      <div class="btn-row" data-group="capa" data-id="${ev.id}">
+        ${CAPAS.map(c=>`<button class="tag-btn" onclick="pick(${ev.id},'capa','${c}',this)">${c}</button>`).join("")}
+      </div>
+      <div class="btn-row" data-group="tipo" data-id="${ev.id}">
+        ${TIPOS.map(t=>`<button class="tag-btn" onclick="pick(${ev.id},'tipo','${t}',this)">${t}</button>`).join("")}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+function pick(id, group, value, btnEl){
+  classifyChoices[id][group] = value;
+  btnEl.parentElement.querySelectorAll(".tag-btn").forEach(b=>b.classList.remove("selected"));
+  btnEl.classList.add("selected");
+}
+function verifyClassify(){
+  classifyScore = 0;
+  let total = 0;
+  EVENTS.filter(e=>e.capa).forEach(ev=>{
+    const group = document.querySelector(`.btn-row[data-group="capa"][data-id="${ev.id}"]`);
+    const tgroup = document.querySelector(`.btn-row[data-group="tipo"][data-id="${ev.id}"]`);
+    [ {el:group, correct:ev.capa}, {el:tgroup, correct:ev.tipo} ].forEach(({el,correct})=>{
+      total++;
+      el.querySelectorAll(".tag-btn").forEach(b=>{
+        const isSel = b.classList.contains("selected");
+        const isRight = b.textContent === correct;
+        if(isRight) b.classList.add("reveal-correct");
+        if(isSel && isRight){ b.classList.add("correct"); classifyScore++; }
+        else if(isSel && !isRight){ b.classList.add("wrong"); }
+      });
+    });
+  });
+  document.querySelectorAll("#step-classify button.primary").forEach(b=>b.remove());
+  const p = document.createElement("p");
+  p.className = "score-line";
+  p.textContent = `${classifyScore} de ${total} correctas`;
+  document.getElementById("step-classify").appendChild(p);
+  const btn = document.createElement("button");
+  btn.className = "primary";
+  btn.textContent = "Continuar al quiz";
+  btn.onclick = () => goStep(3);
+  document.getElementById("step-classify").appendChild(btn);
+}
+
+const QUIZ = [
+  {
+    q: "Un cronista describe que el sur de Hispania, tras la ocupación bizantina, vuelve a manos visigodas en 622. Poco después llega otro poder que termina reduciendo a la nobleza visigoda a las montañas del norte. ¿Qué evento es, y en qué año aproximado?",
+    opts: ["La invasión musulmana, 711", "El matrimonio de Isabel y Fernando, 1469", "El Concilio de Toledo, 619", "La ocupación bizantina, otra vez, en 622"],
+    correct: 0
+  },
+  {
+    q: "El Código de Eurico, el Breviario de Alarico, la Ley de Teudis y el Fuero Juzgo se agrupan bajo un solo periodo. ¿Cuál?",
+    opts: ["El periodo prerromano", "El periodo romano clásico", "La época visigoda", "La Reconquista"],
+    correct: 2
+  },
+  {
+    q: "¿Qué ocurre primero: la ocupación bizantina del sur de la península o la invasión musulmana?",
+    opts: ["La invasión musulmana, por casi un siglo", "La ocupación bizantina, por casi un siglo", "Ocurren en el mismo año", "No están relacionadas cronológicamente"],
+    correct: 1
+  }
+];
+let quizIndex = 0;
+function renderQuiz(){
+  quizIndex = 0; quizScore = 0;
+  showQuizQuestion();
+}
+function showQuizQuestion(){
+  const body = document.getElementById("quiz-body");
+  if(quizIndex >= QUIZ.length){ finishAll(); return; }
+  const item = QUIZ[quizIndex];
+  body.innerHTML = `<p class="eyebrow">Pregunta ${quizIndex+1} de ${QUIZ.length}</p>
+    <p class="quiz-q">${item.q}</p>
+    <div id="opts"></div><p class="feedback" id="qfeedback"></p>`;
+  const optsEl = document.getElementById("opts");
+  item.opts.forEach((opt,i)=>{
+    const b = document.createElement("button");
+    b.className = "quiz-opt";
+    b.textContent = opt;
+    b.onclick = () => answerQuiz(i, b);
+    optsEl.appendChild(b);
+  });
+}
+function answerQuiz(i, btnEl){
+  const item = QUIZ[quizIndex];
+  document.querySelectorAll(".quiz-opt").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx === item.correct) b.classList.add("correct");
+    else if(idx === i) b.classList.add("wrong");
+  });
+  if(i === item.correct) quizScore++;
+  document.getElementById("qfeedback").textContent = i === item.correct ? "Correcto." : "La respuesta correcta está marcada en verde.";
+  const next = document.createElement("button");
+  next.className = "primary";
+  next.style.marginTop = "0.8rem";
+  next.textContent = quizIndex < QUIZ.length - 1 ? "Siguiente pregunta" : "Ver resultado final";
+  next.onclick = () => { quizIndex++; showQuizQuestion(); };
+  document.getElementById("quiz-body").appendChild(next);
+}
+function finishAll(){
+  goStep(4);
+  const totalPossible = 13 + 24 + QUIZ.length;
+  const totalScore = orderScore + classifyScore + quizScore;
+  document.getElementById("final-score").textContent = `${totalScore} / ${totalPossible}`;
+  let msg = "";
+  if(totalScore/totalPossible > 0.8) msg = "La línea entre capas y fuentes, y el orden bizantino/musulmán, te quedaron claros.";
+  else if(totalScore/totalPossible > 0.5) msg = "Vas bien, pero conviene repasar el orden bizantino/musulmán y la línea de tiempo del documento antes del examen.";
+  else msg = "Repasa la línea de tiempo del documento de 2.1-2.3 con calma antes de la próxima sesión.";
+  document.getElementById("final-msg").textContent = msg;
+}
+</script>
